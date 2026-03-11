@@ -3,21 +3,12 @@
 import asyncio
 import logging
 import re
+import traceback
 import httpx
 from .config import TM_API_KEY, TMAPI_BASE_URL, USD_TO_CNY_RATE
 from .models import RawProduct, ShopInfo, Keywords
 
 logger = logging.getLogger(__name__)
-
-# Shared httpx client for connection reuse
-_http_client: httpx.AsyncClient | None = None
-
-
-def _get_http_client() -> httpx.AsyncClient:
-    global _http_client
-    if _http_client is None:
-        _http_client = httpx.AsyncClient(timeout=30.0)
-    return _http_client
 
 
 def _extract_lowest_price(price_str: str) -> float:
@@ -50,7 +41,6 @@ def _parse_shop_info(data: dict) -> ShopInfo:
 
 async def _search_1688(keyword: str, page: int = 1) -> list[RawProduct]:
     """Search 1688 via TMAPI."""
-    client = _get_http_client()
     url = f"{TMAPI_BASE_URL}/1688/search/items"
     params = {
         "keyword": keyword,
@@ -59,8 +49,10 @@ async def _search_1688(keyword: str, page: int = 1) -> list[RawProduct]:
     }
 
     try:
-        logger.info(f"Searching 1688: '{keyword}' page={page}")
-        resp = await client.get(url, params=params)
+        logger.info(f"Searching 1688: '{keyword}' page={page} url={url}")
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(url, params=params)
+        logger.info(f"1688 response status: {resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
 
@@ -129,13 +121,12 @@ async def _search_1688(keyword: str, page: int = 1) -> list[RawProduct]:
         return products
 
     except Exception as e:
-        logger.error(f"1688 search failed for '{keyword}': {e}")
+        logger.error(f"1688 search failed for '{keyword}': {e}\n{traceback.format_exc()}")
         return []
 
 
 async def _search_alibaba(keyword: str, page: int = 1) -> list[RawProduct]:
     """Search Alibaba via TMAPI."""
-    client = _get_http_client()
     url = f"{TMAPI_BASE_URL}/alibaba/search/items"
     params = {
         "keywords": keyword,  # Alibaba TMAPI uses 'keywords' (plural)
@@ -144,8 +135,10 @@ async def _search_alibaba(keyword: str, page: int = 1) -> list[RawProduct]:
     }
 
     try:
-        logger.info(f"Searching Alibaba: '{keyword}' page={page}")
-        resp = await client.get(url, params=params)
+        logger.info(f"Searching Alibaba: '{keyword}' page={page} url={url}")
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(url, params=params)
+        logger.info(f"Alibaba response status: {resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
 
@@ -211,7 +204,7 @@ async def _search_alibaba(keyword: str, page: int = 1) -> list[RawProduct]:
         return products
 
     except Exception as e:
-        logger.error(f"Alibaba search failed for '{keyword}': {e}")
+        logger.error(f"Alibaba search failed for '{keyword}': {e}\n{traceback.format_exc()}")
         return []
 
 

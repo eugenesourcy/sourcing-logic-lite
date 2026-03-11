@@ -349,6 +349,68 @@ async def get_test_file(filename: str):
     return {"error": f"File not found: {filename}"}
 
 
+@app.get("/debug/search-test")
+async def debug_search_test():
+    """Debug endpoint to test TMAPI connectivity."""
+    import httpx
+    import traceback
+    from pipeline.config import TM_API_KEY, TMAPI_BASE_URL
+
+    results = {
+        "tm_api_key_set": bool(TM_API_KEY),
+        "tm_api_key_len": len(TM_API_KEY) if TM_API_KEY else 0,
+        "tmapi_base_url": TMAPI_BASE_URL,
+    }
+
+    # Test 1688 search
+    try:
+        url = f"{TMAPI_BASE_URL}/1688/search/items"
+        params = {"keyword": "coffee cup", "page": "1", "apiToken": TM_API_KEY}
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url, params=params)
+        results["1688_status"] = resp.status_code
+        data = resp.json()
+        results["1688_response_keys"] = list(data.keys()) if isinstance(data, dict) else str(type(data))
+        data_obj = data.get("data", {})
+        if isinstance(data_obj, dict):
+            items = data_obj.get("items", data_obj.get("result", []))
+            results["1688_item_count"] = len(items)
+        elif isinstance(data_obj, list):
+            results["1688_item_count"] = len(data_obj)
+        else:
+            results["1688_data_type"] = str(type(data_obj))
+        results["1688_code"] = data.get("code")
+        results["1688_msg"] = data.get("msg", "")[:200]
+    except Exception as e:
+        results["1688_error"] = f"{type(e).__name__}: {e}"
+        results["1688_traceback"] = traceback.format_exc()[-500:]
+
+    # Test Alibaba search
+    try:
+        url = f"{TMAPI_BASE_URL}/alibaba/search/items"
+        params = {"keywords": "coffee cup", "page": "1", "apiToken": TM_API_KEY}
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url, params=params)
+        results["alibaba_status"] = resp.status_code
+        data = resp.json()
+        results["alibaba_response_keys"] = list(data.keys()) if isinstance(data, dict) else str(type(data))
+        data_obj = data.get("data", {})
+        if isinstance(data_obj, dict):
+            items = data_obj.get("items", data_obj.get("result", []))
+            results["alibaba_item_count"] = len(items)
+        elif isinstance(data_obj, list):
+            results["alibaba_item_count"] = len(data_obj)
+        else:
+            results["alibaba_data_type"] = str(type(data_obj))
+        results["alibaba_code"] = data.get("code")
+        results["alibaba_msg"] = data.get("msg", "")[:200]
+    except Exception as e:
+        results["alibaba_error"] = f"{type(e).__name__}: {e}"
+        results["alibaba_traceback"] = traceback.format_exc()[-500:]
+
+    return results
+
+
 # ============================================================================
 # CLI MODE
 # ============================================================================
