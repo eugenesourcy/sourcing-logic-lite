@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
     <title>SourcingBot Lite</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -510,7 +511,7 @@
             <textarea class="json-editor" id="jsonEditor" spellcheck="false" placeholder="Type a product query (e.g. &quot;Coffee cup ceramic 300ml&quot;) or paste SR JSON here..."></textarea>
             <div class="btn-row">
                 <button class="btn-gen-specs" id="btnGenSpecs" onclick="generateSpecs()">Generate Specs with AI</button>
-                <button class="btn-run" id="btnRun" onclick="runPipeline()">Run Pipeline</button>
+                <button class="btn-run" id="btnRun" onclick="runPipeline()" disabled title="Generate specs first">Run Pipeline</button>
             </div>
         </div>
 
@@ -703,13 +704,21 @@
         document.getElementById('testDataSelect').addEventListener('change', async (e) => {
             if (!e.target.value) return;
 
+            const runBtn = document.getElementById('btnRun');
+
             if (e.target.value === '__template__') {
                 document.getElementById('jsonEditor').value = JSON.stringify(SR_TEMPLATE, null, 2);
+                // Template with specs — check if specs exist
+                const hasSpecs = SR_TEMPLATE.specs && (SR_TEMPLATE.specs.veto_specs.length > 0 || SR_TEMPLATE.specs.re_rank_specs.length > 0);
+                runBtn.disabled = !hasSpecs;
+                runBtn.title = hasSpecs ? '' : 'Generate specs first';
                 e.target.value = '';
                 return;
             }
             if (e.target.value === '__template_no_specs__') {
                 document.getElementById('jsonEditor').value = JSON.stringify(SR_TEMPLATE_NO_SPECS, null, 2);
+                runBtn.disabled = true;
+                runBtn.title = 'Generate specs first';
                 e.target.value = '';
                 return;
             }
@@ -718,6 +727,13 @@
                 const resp = await fetch(`/test-data/${e.target.value}`);
                 const data = await resp.json();
                 document.getElementById('jsonEditor').value = JSON.stringify(data, null, 2);
+                // Enable run if test data has specs
+                const hasSpecs = data.specs && (
+                    (data.specs.veto_specs && data.specs.veto_specs.length > 0) ||
+                    (data.specs.re_rank_specs && data.specs.re_rank_specs.length > 0)
+                );
+                runBtn.disabled = !hasSpecs;
+                runBtn.title = hasSpecs ? '' : 'Generate specs first';
             } catch (err) {
                 console.error('Failed to load test data:', err);
             }
@@ -849,6 +865,11 @@
                 }
 
                 editor.value = JSON.stringify(inputData, null, 2);
+
+                // Enable the Run Pipeline button now that specs are ready
+                const runBtn = document.getElementById('btnRun');
+                runBtn.disabled = false;
+                runBtn.title = '';
 
                 alert(`Generated ${specs.veto_specs.length} veto specs and ${specs.re_rank_specs.length} rerank specs. Review them in the editor, then run the pipeline!`);
             } catch (err) {
@@ -1087,7 +1108,7 @@
                 list.innerHTML += `
                     <div class="product-card">
                         <div class="product-card-inner">
-                            <img class="product-img" src="${p.image_url}" alt="" onerror="this.style.display='none'">
+                            <img class="product-img" src="${p.image_url}" alt="" referrerpolicy="no-referrer" crossorigin="anonymous" onerror="this.style.display='none'">
                             <div class="product-info">
                                 <span class="rank-badge ${p.rank <= 3 ? 'top3' : ''}">${p.rank}</span>
                                 <h3>${p.title || 'Untitled Product'}</h3>
@@ -1129,11 +1150,20 @@
             }
 
             if (input.type === 'raw') {
-                // Raw text → auto-build SR JSON with empty specs (pipeline will auto-generate)
-                inputData = buildSrFromQuery(input.query, { veto_specs: [], re_rank_specs: [] });
-                editor.value = JSON.stringify(inputData, null, 2);
-            } else {
-                inputData = input.data;
+                alert('Please click "Generate Specs with AI" first to generate specifications from your query.');
+                return;
+            }
+
+            inputData = input.data;
+
+            // Verify specs exist
+            const hasSpecs = inputData.specs && (
+                (inputData.specs.veto_specs && inputData.specs.veto_specs.length > 0) ||
+                (inputData.specs.re_rank_specs && inputData.specs.re_rank_specs.length > 0)
+            );
+            if (!hasSpecs) {
+                alert('No specs found. Please click "Generate Specs with AI" first to generate veto/rerank specifications.');
+                return;
             }
 
             btn.disabled = true;
