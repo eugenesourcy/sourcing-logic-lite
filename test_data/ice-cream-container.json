@@ -1,0 +1,139 @@
+{
+  "runId": "test-run-ice-cream-container",
+  "original_requirement": {
+    "title": "Ice Cream Container 16 oz",
+    "description": "Double-walled stainless steel container for storing and serving ice cream or frozen desserts. 16 oz capacity with screw-on lid. Available in multiple colors: Black, White, Mint Green, Silver. Insulation for maintaining temperature.",
+    "reference_images": [
+      "https://cdn.sourcy.ai/sample_files/2025-07-14T09:03:47.503Z-f8516fe6-db40-51ea-891f-093adc2b0f70.png"
+    ],
+    "target_price": 12,
+    "target_price_currency": "USD",
+    "target_quantity": 108,
+    "target_quantity_unit": "pcs",
+    "needs_customization": true,
+    "num_options": 4,
+    "customization_reference_url": [
+      "https://cdn.sourcy.ai/sample_files/2025-07-14T09:03:47.503Z-f8516fe6-db40-51ea-891f-093adc2b0f70.png"
+    ],
+    "customization_type": "color_options_customization",
+    "customization_description": "Multiple color variants: White (27), Black (27), Silver (27), Pink (10), Green (17)"
+  },
+  "specs": {
+    "veto_specs": [
+      {
+        "spec_id": 1,
+        "spec_name": "product_category",
+        "mandatory_values": ["ice cream container", "frozen dessert container", "ice cream tub", "insulated food container"],
+        "unacceptable_values": ["ice cream maker", "ice cream scoop", "ice cream machine"],
+        "spec_type": "Functional",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "VETO",
+        "matching_rule": "exact_match",
+        "reasoning": "Must be a container/tub for ice cream storage, not a maker or scoop.",
+        "veto_score": 10,
+        "priority_signal": "Signal 6: Visual Features (Product Category confirmed by text)"
+      },
+      {
+        "spec_id": 2,
+        "spec_name": "material",
+        "mandatory_values": ["stainless steel", "double wall stainless steel", "304 stainless steel", "316 stainless steel"],
+        "unacceptable_values": ["plastic", "glass", "ceramic"],
+        "spec_type": "Material",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "VETO",
+        "matching_rule": "keyword_match",
+        "reasoning": "Must be stainless steel for insulation and durability.",
+        "veto_score": 9,
+        "priority_signal": "Signal 2: Material"
+      },
+      {
+        "spec_id": 3,
+        "spec_name": "insulation",
+        "mandatory_values": ["double wall", "vacuum insulated", "insulated", "double-walled"],
+        "unacceptable_values": ["single wall"],
+        "spec_type": "Functional",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "VETO",
+        "matching_rule": "keyword_match",
+        "reasoning": "Must have double-wall insulation for temperature maintenance.",
+        "veto_score": 8,
+        "priority_signal": "Signal 3: Binary Functional Requirements"
+      },
+      {
+        "spec_id": 4,
+        "spec_name": "lid_type",
+        "mandatory_values": ["screw-on lid", "lid", "cover", "sealed"],
+        "unacceptable_values": [],
+        "spec_type": "Functional",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "VETO",
+        "matching_rule": "keyword_match",
+        "reasoning": "Must have a lid for proper storage.",
+        "veto_score": 7,
+        "priority_signal": "Signal 3: Binary Functional Requirements"
+      }
+    ],
+    "re_rank_specs": [
+      {
+        "spec_id": 5,
+        "spec_name": "capacity",
+        "acceptable_values": ["16oz", "16 oz", "500ml", "473ml", "450ml"],
+        "spec_type": "Numeric",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "RE-RANK",
+        "matching_rule": "within_10_percent",
+        "reasoning": "Target capacity is 16oz (~473ml). Within 10% is acceptable.",
+        "re_rank_score": 5,
+        "priority_signal": "Signal 1: Numeric Dimensions"
+      },
+      {
+        "spec_id": 6,
+        "spec_name": "color_options",
+        "acceptable_values": ["black", "white", "silver", "mint green", "pink", "multiple colors", "customizable"],
+        "spec_type": "Visual",
+        "source": "image",
+        "text_confirmation": false,
+        "classification": "RE-RANK",
+        "matching_rule": "keyword_match",
+        "reasoning": "Preferred colors: Black, White, Silver, Mint Green, Pink.",
+        "re_rank_score": 4,
+        "priority_signal": "Signal 6: Visual Features"
+      },
+      {
+        "spec_id": 7,
+        "spec_name": "price",
+        "acceptable_values": ["under $12"],
+        "spec_type": "Numeric",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "RE-RANK",
+        "matching_rule": "less_than_or_equal",
+        "reasoning": "Target price is $12 USD per unit.",
+        "re_rank_score": 4,
+        "priority_signal": "Signal 4: Price"
+      },
+      {
+        "spec_id": 8,
+        "spec_name": "quantity",
+        "acceptable_values": ["MOQ <= 108"],
+        "spec_type": "Numeric",
+        "source": "text",
+        "text_confirmation": true,
+        "classification": "RE-RANK",
+        "matching_rule": "less_than_or_equal",
+        "reasoning": "Need 108 units, MOQ must be at or below this.",
+        "re_rank_score": 3,
+        "priority_signal": "Signal 5: Quantity"
+      }
+    ]
+  },
+  "reference_images": [
+    "https://cdn.sourcy.ai/sample_files/2025-07-14T09:03:47.503Z-f8516fe6-db40-51ea-891f-093adc2b0f70.png"
+  ],
+  "sourcing_type": "specific"
+}

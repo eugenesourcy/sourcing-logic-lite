@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SourcingBot Lite</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1117;
+            color: #e1e4e8;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+        .header h1 span { color: #7ee787; font-weight: 400; }
+        .timer {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 28px;
+            color: #7ee787;
+            min-width: 100px;
+            text-align: right;
+        }
+        .timer.running { color: #f0883e; }
+
+        /* Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 0;
+            height: calc(100vh - 57px);
+        }
+
+        /* Left Panel */
+        .left-panel {
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            font-size: 13px;
+            font-weight: 600;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-data-select {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .json-editor {
+            flex: 1;
+            width: 100%;
+            background: #0d1117;
+            color: #c9d1d9;
+            border: none;
+            padding: 16px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+        }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+        }
+        .btn-run {
+            flex: 1;
+            padding: 12px;
+            background: #238636;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-run:hover { background: #2ea043; }
+        .btn-run:disabled {
+            background: #21262d;
+            color: #484f58;
+            cursor: not-allowed;
+        }
+        .btn-gen-specs {
+            padding: 12px 16px;
+            background: #1f6feb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-gen-specs:hover { background: #388bfd; }
+        .btn-gen-specs:disabled {
+            background: #21262d;
+            color: #484f58;
+            cursor: not-allowed;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* View Toggle Tabs */
+        .view-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #30363d;
+        }
+        .view-tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #8b949e;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .view-tab:hover { color: #c9d1d9; }
+        .view-tab.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+
+        /* JSON View */
+        .json-output {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #c9d1d9;
+            max-height: calc(100vh - 240px);
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .json-copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .json-copy-btn:hover { background: #30363d; }
+
+        /* Pipeline Steps */
+        .pipeline-steps {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .step-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #8b949e;
+            transition: all 0.3s;
+        }
+        .step-pill.hidden { display: none; }
+        .step-pill.running {
+            border-color: #f0883e;
+            color: #f0883e;
+            background: rgba(240, 136, 62, 0.1);
+        }
+        .step-pill.done {
+            border-color: #238636;
+            color: #7ee787;
+            background: rgba(35, 134, 54, 0.1);
+        }
+        .step-pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #484f58;
+        }
+        .step-pill.running .dot {
+            background: #f0883e;
+            animation: pulse 1s infinite;
+        }
+        .step-pill.done .dot { background: #7ee787; }
+        .step-pill .step-time {
+            font-family: monospace;
+            font-size: 11px;
+            color: #7ee787;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+        .summary-card .label {
+            font-size: 11px;
+            color: #8b949e;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+        .summary-card.highlight .value { color: #7ee787; }
+
+        /* Product Cards */
+        .product-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .product-card:hover { border-color: #58a6ff; }
+        .product-card-inner {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 16px;
+            padding: 16px;
+        }
+        .product-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #21262d;
+        }
+        .product-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #c9d1d9;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .product-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .product-meta span {
+            font-size: 13px;
+            color: #8b949e;
+        }
+        .product-meta span strong {
+            color: #c9d1d9;
+        }
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #238636;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            float: right;
+        }
+        .rank-badge.top3 { background: #f0883e; }
+
+        /* Score Bars */
+        .score-bars {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+            margin-top: 10px;
+        }
+        .score-bar-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .score-bar-label {
+            font-size: 11px;
+            color: #8b949e;
+            min-width: 80px;
+            white-space: nowrap;
+        }
+        .score-bar-track {
+            flex: 1;
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .score-bar-fill.green { background: #7ee787; }
+        .score-bar-fill.blue { background: #58a6ff; }
+        .score-bar-fill.orange { background: #f0883e; }
+        .score-bar-fill.purple { background: #bc8cff; }
+        .score-bar-pct {
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 32px;
+            text-align: right;
+        }
+        .score-bar-pct.green { color: #7ee787; }
+        .score-bar-pct.blue { color: #58a6ff; }
+        .score-bar-pct.orange { color: #f0883e; }
+        .score-bar-pct.purple { color: #bc8cff; }
+
+        /* Spec Results */
+        .spec-results {
+            padding: 0 16px 16px;
+            border-top: 1px solid #21262d;
+        }
+        .spec-toggle {
+            padding: 8px 0;
+            font-size: 12px;
+            color: #58a6ff;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        .spec-list { display: none; }
+        .spec-list.open { display: block; }
+        .spec-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #21262d;
+        }
+        .spec-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .spec-icon.match { background: rgba(35,134,54,0.2); color: #7ee787; }
+        .spec-icon.not-match { background: rgba(248,81,73,0.2); color: #f85149; }
+        .spec-icon.unknown { background: rgba(210,153,34,0.2); color: #d2992a; }
+        .spec-detail { flex: 1; }
+        .spec-detail .spec-name { color: #c9d1d9; font-weight: 500; }
+        .spec-detail .spec-reasoning { color: #8b949e; margin-top: 2px; }
+
+        /* Keywords Display */
+        .keywords-section {
+            margin-bottom: 24px;
+        }
+        .keyword-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .keyword-tag {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+        .keyword-tag.en { border-color: #58a6ff; color: #58a6ff; }
+        .keyword-tag.cn { border-color: #f0883e; color: #f0883e; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: #484f58;
+        }
+        .empty-state h2 { font-size: 24px; margin-bottom: 12px; color: #8b949e; }
+        .empty-state p { font-size: 14px; line-height: 1.6; }
+
+        /* Platform tag */
+        .platform-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .platform-tag.alibaba { background: rgba(240,136,62,0.15); color: #f0883e; }
+        .platform-tag.p1688 { background: rgba(88,166,255,0.15); color: #58a6ff; }
+
+        /* Product Specs in JSON view */
+        .product-specs-section {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #0d1117;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .product-specs-section .spec-kv {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px solid #161b22;
+        }
+        .product-specs-section .spec-kv:last-child { border-bottom: none; }
+        .spec-kv .spec-key { color: #8b949e; }
+        .spec-kv .spec-val { color: #c9d1d9; font-weight: 500; }
+
+        /* Generated specs info banner */
+        .gen-specs-banner {
+            background: rgba(31, 111, 235, 0.1);
+            border: 1px solid #1f6feb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #58a6ff;
+        }
+        .gen-specs-banner strong { color: #79c0ff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SourcingBot <span>Lite</span></h1>
+        <div class="timer" id="timer">0.0s</div>
+    </div>
+
+    <div class="container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <span>Product Query / SR JSON</span>
+                <select class="test-data-select" id="testDataSelect">
+                    <option value="">Load test data...</option>
+                    <option value="__template__">Template (with specs)</option>
+                    <option value="__template_no_specs__">Template (no specs - AI gen)</option>
+                </select>
+            </div>
+            <textarea class="json-editor" id="jsonEditor" spellcheck="false" placeholder="Type a product query (e.g. &quot;Coffee cup ceramic 300ml&quot;) or paste SR JSON here..."></textarea>
+            <div class="btn-row">
+                <button class="btn-gen-specs" id="btnGenSpecs" onclick="generateSpecs()">Generate Specs with AI</button>
+                <button class="btn-run" id="btnRun" onclick="runPipeline()">Run Pipeline</button>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel" id="rightPanel">
+            <div class="empty-state" id="emptyState">
+                <h2>Ready to Source</h2>
+                <p>Type a raw product query (e.g. <strong>"Coffee cup ceramic 300ml"</strong>) or paste SR JSON on the left.<br><br>
+                <strong>Quick start:</strong> Type any product → click "Generate Specs with AI" → review → "Run Pipeline"<br>
+                <strong>No specs?</strong> Just run directly — specs will be auto-generated.<br><br>
+                Target: 20-30 seconds with agentic spec matching.</p>
+            </div>
+
+            <div id="resultsContainer" style="display:none">
+                <!-- View Toggle Tabs -->
+                <div class="view-tabs" id="viewTabs">
+                    <button class="view-tab active" onclick="switchView('cards')">Products</button>
+                    <button class="view-tab" onclick="switchView('json')">JSON (Agent)</button>
+                </div>
+
+                <!-- Pipeline Steps -->
+                <div class="pipeline-steps" id="pipelineSteps">
+                    <div class="step-pill hidden" id="step-spec_gen">
+                        <div class="dot"></div>
+                        <span>AI Specs</span>
+                        <span class="step-time"></span>
+                    </div>
+                    <div class="step-pill" id="step-keyword_gen">
+                        <div class="dot"></div>
+                        <span>Keywords</span>
+                        <span class="step-time"></span>
+                    </div>
+                    <div class="step-pill" id="step-search">
+                        <div class="dot"></div>
+                        <span>Search</span>
+                        <span class="step-time"></span>
+                    </div>
+                    <div class="step-pill" id="step-prefilter">
+                        <div class="dot"></div>
+                        <span>Pre-filter</span>
+                        <span class="step-time"></span>
+                    </div>
+                    <div class="step-pill" id="step-agentic_matching">
+                        <div class="dot"></div>
+                        <span>Agentic Matching</span>
+                        <span class="step-time"></span>
+                    </div>
+                    <div class="step-pill" id="step-ranking">
+                        <div class="dot"></div>
+                        <span>Ranking</span>
+                        <span class="step-time"></span>
+                    </div>
+                </div>
+
+                <!-- Generated Specs Banner -->
+                <div class="gen-specs-banner" id="genSpecsBanner" style="display:none">
+                    <strong>AI-Generated Specs:</strong> <span id="genSpecsInfo"></span>
+                </div>
+
+                <!-- Keywords -->
+                <div class="keywords-section" id="keywordsSection" style="display:none">
+                    <div class="panel-header" style="padding: 0 0 8px 0; border: none;">Keywords Generated</div>
+                    <div class="keyword-tags" id="keywordTags"></div>
+                </div>
+
+                <!-- Summary -->
+                <div class="summary-grid" id="summaryGrid" style="display:none">
+                    <div class="summary-card highlight">
+                        <div class="value" id="totalTime">-</div>
+                        <div class="label">Total Time</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="value" id="totalSearched">-</div>
+                        <div class="label">Searched</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="value" id="totalFiltered">-</div>
+                        <div class="label">Filtered</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="value" id="totalShortlisted">-</div>
+                        <div class="label">Shortlisted</div>
+                    </div>
+                </div>
+
+                <!-- CARD VIEW -->
+                <div class="view-panel active" id="viewCards">
+                    <div id="productsList"></div>
+                </div>
+
+                <!-- JSON VIEW (for agent consumption) -->
+                <div class="view-panel" id="viewJson">
+                    <button class="json-copy-btn" onclick="copyJsonResults()">Copy JSON</button>
+                    <pre class="json-output" id="jsonOutput">Run the pipeline to see JSON results...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====== SR TEMPLATES ======
+        const SR_TEMPLATE = {
+            "runId": "my-sourcing-run",
+            "original_requirement": {
+                "title": "YOUR PRODUCT TITLE HERE",
+                "description": "Describe your product in detail: materials, dimensions, features, etc.",
+                "reference_images": [],
+                "target_price": 10.0,
+                "target_price_currency": "USD",
+                "target_quantity": 500,
+                "target_quantity_unit": "pcs",
+                "needs_customization": false,
+                "num_options": 5,
+                "customization_reference_url": [],
+                "customization_type": null,
+                "customization_description": null
+            },
+            "specs": {
+                "veto_specs": [
+                    {
+                        "spec_id": 1,
+                        "spec_name": "product_category",
+                        "mandatory_values": ["your product type"],
+                        "unacceptable_values": ["wrong product type"],
+                        "spec_type": "Functional",
+                        "source": "text",
+                        "text_confirmation": true,
+                        "classification": "VETO",
+                        "matching_rule": "exact_match",
+                        "reasoning": "Must be the correct product category.",
+                        "veto_score": 10,
+                        "priority_signal": ""
+                    }
+                ],
+                "re_rank_specs": [
+                    {
+                        "spec_id": 2,
+                        "spec_name": "price",
+                        "acceptable_values": ["under $10"],
+                        "spec_type": "Numeric",
+                        "source": "text",
+                        "text_confirmation": true,
+                        "classification": "RE-RANK",
+                        "matching_rule": "less_than_or_equal",
+                        "reasoning": "Prefer lower price.",
+                        "re_rank_score": 4,
+                        "priority_signal": ""
+                    }
+                ]
+            },
+            "reference_images": [],
+            "sourcing_type": "specific"
+        };
+
+        const SR_TEMPLATE_NO_SPECS = {
+            "runId": "my-sourcing-run",
+            "original_requirement": {
+                "title": "500ml Stainless Steel Water Bottle",
+                "description": "Double wall insulated water bottle, BPA-free, leak-proof lid, suitable for outdoor activities. Prefer matte finish.",
+                "reference_images": [],
+                "target_price": 5.0,
+                "target_price_currency": "USD",
+                "target_quantity": 1000,
+                "target_quantity_unit": "pcs",
+                "needs_customization": false,
+                "num_options": 5
+            },
+            "specs": {
+                "veto_specs": [],
+                "re_rank_specs": []
+            },
+            "sourcing_type": "specific"
+        };
+
+        let timerInterval = null;
+        let startTime = 0;
+        let lastResultData = null;  // Store full result for JSON view
+
+        // Load test data options
+        fetch('/test-data').then(r => r.json()).then(data => {
+            const select = document.getElementById('testDataSelect');
+            data.files.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.path;
+                opt.textContent = f.title;
+                select.appendChild(opt);
+            });
+        }).catch(() => {});
+
+        document.getElementById('testDataSelect').addEventListener('change', async (e) => {
+            if (!e.target.value) return;
+
+            if (e.target.value === '__template__') {
+                document.getElementById('jsonEditor').value = JSON.stringify(SR_TEMPLATE, null, 2);
+                e.target.value = '';
+                return;
+            }
+            if (e.target.value === '__template_no_specs__') {
+                document.getElementById('jsonEditor').value = JSON.stringify(SR_TEMPLATE_NO_SPECS, null, 2);
+                e.target.value = '';
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/test-data/${e.target.value}`);
+                const data = await resp.json();
+                document.getElementById('jsonEditor').value = JSON.stringify(data, null, 2);
+            } catch (err) {
+                console.error('Failed to load test data:', err);
+            }
+        });
+
+        // ====== VIEW SWITCHING ======
+        function switchView(view) {
+            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+
+            if (view === 'json') {
+                document.querySelectorAll('.view-tab')[1].classList.add('active');
+                document.getElementById('viewJson').classList.add('active');
+            } else {
+                document.querySelectorAll('.view-tab')[0].classList.add('active');
+                document.getElementById('viewCards').classList.add('active');
+            }
+        }
+
+        function copyJsonResults() {
+            const text = document.getElementById('jsonOutput').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.json-copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy JSON', 2000);
+            });
+        }
+
+        // ====== GENERATE SPECS WITH AI ======
+        // ====== DETECT INPUT TYPE ======
+        function parseEditorInput(text) {
+            text = text.trim();
+            if (!text) return { type: 'empty' };
+
+            // Try parsing as JSON first
+            try {
+                const data = JSON.parse(text);
+                if (data && typeof data === 'object') {
+                    return { type: 'json', data };
+                }
+            } catch (e) {
+                // Not JSON — treat as raw query
+            }
+
+            return { type: 'raw', query: text };
+        }
+
+        function buildSrFromQuery(query, specs) {
+            return {
+                runId: 'raw-query-run',
+                original_requirement: {
+                    title: query,
+                    description: '',
+                    reference_images: [],
+                    target_price: 0,
+                    target_price_currency: 'USD',
+                    target_quantity: 0,
+                    target_quantity_unit: 'pcs',
+                    needs_customization: false,
+                    num_options: 5,
+                },
+                specs: specs || { veto_specs: [], re_rank_specs: [] },
+                sourcing_type: 'specific',
+            };
+        }
+
+        async function generateSpecs() {
+            const editor = document.getElementById('jsonEditor');
+            const btn = document.getElementById('btnGenSpecs');
+            const input = parseEditorInput(editor.value);
+
+            if (input.type === 'empty') {
+                alert('Please type a product query (e.g. "Coffee cup") or paste SR JSON.');
+                return;
+            }
+
+            let title = '';
+            let description = '';
+            let target_price = 0;
+            let target_quantity = 0;
+            let inputData = null;
+
+            if (input.type === 'raw') {
+                // Raw text query — use it directly as the title
+                title = input.query;
+            } else {
+                // JSON input — extract title from original_requirement
+                inputData = input.data;
+                const req = inputData.original_requirement;
+                if (req && req.title) {
+                    title = req.title;
+                    description = req.description || '';
+                    target_price = req.target_price || 0;
+                    target_quantity = req.target_quantity || 0;
+                } else {
+                    alert('JSON must have original_requirement.title, or just type a raw product query.');
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                const resp = await fetch('/generate-specs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: title,
+                        title: title,
+                        description: description,
+                        target_price: target_price,
+                        target_quantity: target_quantity,
+                    }),
+                });
+                const specs = await resp.json();
+
+                if (specs.error) {
+                    alert('Spec generation error: ' + specs.error);
+                    return;
+                }
+
+                if (input.type === 'raw') {
+                    // Build full SR JSON from raw query + generated specs
+                    inputData = buildSrFromQuery(title, specs);
+                } else {
+                    // Merge generated specs into existing JSON
+                    inputData.specs = specs;
+                }
+
+                editor.value = JSON.stringify(inputData, null, 2);
+
+                alert(`Generated ${specs.veto_specs.length} veto specs and ${specs.re_rank_specs.length} rerank specs. Review them in the editor, then run the pipeline!`);
+            } catch (err) {
+                alert('Failed to generate specs: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Specs with AI';
+            }
+        }
+
+        // ====== TIMER ======
+        function startTimer() {
+            startTime = Date.now();
+            const timerEl = document.getElementById('timer');
+            timerEl.classList.add('running');
+            timerInterval = setInterval(() => {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                timerEl.textContent = elapsed + 's';
+            }, 100);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer').classList.remove('running');
+        }
+
+        function resetUI() {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'block';
+            document.getElementById('summaryGrid').style.display = 'none';
+            document.getElementById('keywordsSection').style.display = 'none';
+            document.getElementById('genSpecsBanner').style.display = 'none';
+            document.getElementById('productsList').innerHTML = '';
+            document.getElementById('keywordTags').innerHTML = '';
+            document.getElementById('jsonOutput').textContent = 'Running pipeline...';
+            lastResultData = null;
+
+            // Reset step pills
+            document.querySelectorAll('.step-pill').forEach(el => {
+                el.classList.remove('running', 'done');
+                if (el.id === 'step-spec_gen') el.classList.add('hidden');
+                el.querySelector('.step-time').textContent = '';
+            });
+
+            // Switch to cards view
+            switchView('cards');
+        }
+
+        function updateStep(step, status, time, data) {
+            const el = document.getElementById('step-' + step);
+            if (!el) return;
+
+            // Show spec_gen pill if it fires
+            if (step === 'spec_gen') {
+                el.classList.remove('hidden');
+            }
+
+            el.classList.remove('running', 'done');
+            if (status === 'running' || status === 'progress') {
+                el.classList.add('running');
+            } else if (status === 'done') {
+                el.classList.add('done');
+            }
+
+            if (time) {
+                el.querySelector('.step-time').textContent = time + 's';
+            }
+
+            if (status === 'progress' && data) {
+                el.querySelector('.step-time').textContent = `${data.completed}/${data.total}`;
+            }
+
+            // Show generated specs info
+            if (step === 'spec_gen' && status === 'done' && data) {
+                const banner = document.getElementById('genSpecsBanner');
+                banner.style.display = 'block';
+                document.getElementById('genSpecsInfo').textContent =
+                    `${data.veto || 0} mandatory specs + ${data.rerank || 0} preference specs auto-generated from your title & description (${time}s)`;
+            }
+
+            // Update keywords section
+            if (step === 'keyword_gen' && status === 'done' && data) {
+                const section = document.getElementById('keywordsSection');
+                const tags = document.getElementById('keywordTags');
+                section.style.display = 'block';
+                tags.innerHTML = '';
+                (data.en || []).forEach(k => {
+                    tags.innerHTML += `<span class="keyword-tag en">${k}</span>`;
+                });
+                (data.cn || []).forEach(k => {
+                    tags.innerHTML += `<span class="keyword-tag cn">${k}</span>`;
+                });
+            }
+
+            // Update search count
+            if (step === 'search' && status === 'done' && data) {
+                el.querySelector('.step-time').textContent = `${time}s (${data.count} products)`;
+            }
+        }
+
+        // ====== SCORE BARS ======
+        function buildScoreBars(p) {
+            const specPct = Math.round((p.veto_score || 0) * 100);
+            const prefPct = Math.round((p.rerank_score || 0) * 100);
+            const suppPct = Math.round((p.supplier_score || 0) * 100);
+            const overallPct = Math.round(Math.min(100, ((p.combined_score || 0) / 2) * 100));
+
+            const specColor = specPct >= 70 ? 'green' : 'orange';
+            const overallColor = overallPct >= 60 ? 'green' : 'orange';
+
+            return `
+                <div class="score-bars">
+                    <div class="score-bar-item" title="How well this product matches mandatory specs (${p.veto_score?.toFixed(2) || 0})">
+                        <span class="score-bar-label">Spec Match</span>
+                        <div class="score-bar-track"><div class="score-bar-fill ${specColor}" style="width:${specPct}%"></div></div>
+                        <span class="score-bar-pct ${specColor}">${specPct}%</span>
+                    </div>
+                    <div class="score-bar-item" title="How well this product matches preferred features (${p.rerank_score?.toFixed(2) || 0})">
+                        <span class="score-bar-label">Preferences</span>
+                        <div class="score-bar-track"><div class="score-bar-fill blue" style="width:${prefPct}%"></div></div>
+                        <span class="score-bar-pct blue">${prefPct}%</span>
+                    </div>
+                    <div class="score-bar-item" title="Supplier reliability: factory status, experience, rating (${p.supplier_score?.toFixed(2) || 0})">
+                        <span class="score-bar-label">Supplier</span>
+                        <div class="score-bar-track"><div class="score-bar-fill purple" style="width:${suppPct}%"></div></div>
+                        <span class="score-bar-pct purple">${suppPct}%</span>
+                    </div>
+                    <div class="score-bar-item" title="Overall score combining preferences + supplier (${p.combined_score?.toFixed(2) || 0})">
+                        <span class="score-bar-label"><strong>Overall</strong></span>
+                        <div class="score-bar-track"><div class="score-bar-fill ${overallColor}" style="width:${overallPct}%"></div></div>
+                        <span class="score-bar-pct ${overallColor}"><strong>${overallPct}%</strong></span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ====== BUILD JSON FOR AGENT CONSUMPTION ======
+        function buildAgentJson(result) {
+            // Build a clean JSON output focused on what other agents need
+            const agentOutput = {
+                run_id: result.run_id,
+                request_title: result.request_title,
+                execution_time_seconds: result.execution_time_seconds,
+                total_searched: result.total_searched,
+                total_shortlisted: result.total_shortlisted,
+                keywords: result.keywords_generated,
+                products: (result.products || []).map(p => ({
+                    rank: p.rank,
+                    product_id: p.product_id,
+                    title: p.title,
+                    product_url: p.product_url,
+                    image_url: p.image_url,
+                    platform: p.platform,
+                    price_usd: p.price,
+                    price_original: p.price_original,
+                    moq: p.moq,
+                    currency: p.currency,
+                    supplier: {
+                        name: p.supplier_name,
+                        location: p.supplier_location,
+                        is_factory: p.supplier_is_factory,
+                        rating: p.supplier_rating,
+                        years: p.supplier_years,
+                    },
+                    scores: {
+                        veto_score: p.veto_score,
+                        rerank_score: p.rerank_score,
+                        supplier_score: p.supplier_score,
+                        combined_score: p.combined_score,
+                    },
+                    verdict: p.verdict,
+                    product_specs: p.product_specs || {},
+                    spec_results: (p.spec_results || []).map(s => ({
+                        spec_name: s.spec_name,
+                        match_type: s.match_type,
+                        product_value: s.product_value,
+                        confidence: s.confidence,
+                        reasoning: s.reasoning,
+                    })),
+                    relaxed_specs: p.relaxed_specs || [],
+                })),
+            };
+            return agentOutput;
+        }
+
+        // ====== RENDER RESULTS ======
+        function renderResults(result) {
+            lastResultData = result;
+
+            // Summary
+            document.getElementById('summaryGrid').style.display = 'grid';
+            document.getElementById('totalTime').textContent = result.execution_time_seconds + 's';
+            document.getElementById('totalSearched').textContent = result.total_searched;
+            document.getElementById('totalFiltered').textContent = result.total_after_prefilter;
+            document.getElementById('totalShortlisted').textContent = result.total_shortlisted;
+
+            // JSON View
+            const agentJson = buildAgentJson(result);
+            document.getElementById('jsonOutput').textContent = JSON.stringify(agentJson, null, 2);
+
+            // Products Card View
+            const list = document.getElementById('productsList');
+            list.innerHTML = '';
+
+            if (result.products.length === 0) {
+                list.innerHTML = '<div class="empty-state"><h2>No Products Shortlisted</h2><p>Try adjusting specs or broadening the search.</p></div>';
+                return;
+            }
+
+            result.products.forEach(p => {
+                const specIcons = { 'MATCH': 'match', 'NOT_MATCH': 'not-match', 'UNKNOWN': 'unknown' };
+                const specSymbols = { 'MATCH': '+', 'NOT_MATCH': 'x', 'UNKNOWN': '?' };
+                const specHtml = (p.spec_results || []).map(s => `
+                    <div class="spec-item">
+                        <div class="spec-icon ${specIcons[s.match_type] || 'unknown'}">${specSymbols[s.match_type] || '?'}</div>
+                        <div class="spec-detail">
+                            <div class="spec-name">${s.spec_name} ${s.product_value ? '= ' + s.product_value : ''}</div>
+                            <div class="spec-reasoning">${s.reasoning || ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Product specs key-value display
+                const productSpecs = p.product_specs || {};
+                const specsKvHtml = Object.keys(productSpecs).length > 0
+                    ? `<div class="product-specs-section">
+                        ${Object.entries(productSpecs).map(([k, v]) =>
+                            `<div class="spec-kv"><span class="spec-key">${k}</span><span class="spec-val">${v || 'N/A'}</span></div>`
+                        ).join('')}
+                       </div>`
+                    : '';
+
+                const platformClass = p.platform === 'alibaba' ? 'alibaba' : 'p1688';
+                const scoreBarsHtml = buildScoreBars(p);
+
+                list.innerHTML += `
+                    <div class="product-card">
+                        <div class="product-card-inner">
+                            <img class="product-img" src="${p.image_url}" alt="" onerror="this.style.display='none'">
+                            <div class="product-info">
+                                <span class="rank-badge ${p.rank <= 3 ? 'top3' : ''}">${p.rank}</span>
+                                <h3>${p.title || 'Untitled Product'}</h3>
+                                <div class="product-meta">
+                                    <span><strong>$${(p.price || 0).toFixed(2)}</strong> USD</span>
+                                    <span>MOQ: <strong>${p.moq || '-'}</strong></span>
+                                    <span class="platform-tag ${platformClass}">${p.platform}</span>
+                                    ${p.supplier_is_factory ? '<span style="color:#7ee787">Factory</span>' : ''}
+                                </div>
+                                ${scoreBarsHtml}
+                                ${p.relaxed_specs && p.relaxed_specs.length ? '<div style="margin-top:6px;font-size:11px;color:#d2992a">Relaxed: ' + p.relaxed_specs.join(', ') + '</div>' : ''}
+                            </div>
+                        </div>
+                        <div class="spec-results">
+                            <button class="spec-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? 'Hide spec details' : 'Show spec details (${(p.spec_results || []).length})'">
+                                Show spec details (${(p.spec_results || []).length})
+                            </button>
+                            <div class="spec-list">
+                                ${specHtml}
+                                ${specsKvHtml ? '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#8b949e;font-weight:600">EXTRACTED PRODUCT SPECS</div>' + specsKvHtml : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // ====== RUN PIPELINE ======
+        async function runPipeline() {
+            const editor = document.getElementById('jsonEditor');
+            const btn = document.getElementById('btnRun');
+            let inputData;
+
+            const input = parseEditorInput(editor.value);
+
+            if (input.type === 'empty') {
+                alert('Please type a product query or paste SR JSON.');
+                return;
+            }
+
+            if (input.type === 'raw') {
+                // Raw text → auto-build SR JSON with empty specs (pipeline will auto-generate)
+                inputData = buildSrFromQuery(input.query, { veto_specs: [], re_rank_specs: [] });
+                editor.value = JSON.stringify(inputData, null, 2);
+            } else {
+                inputData = input.data;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            resetUI();
+            startTimer();
+
+            try {
+                const response = await fetch('/source/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(inputData),
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const event = JSON.parse(line.slice(6));
+                                if (event.step === 'result' && event.data) {
+                                    renderResults(event.data);
+                                } else if (event.step === 'error') {
+                                    alert('Pipeline error: ' + (event.message || 'Unknown'));
+                                } else {
+                                    updateStep(event.step, event.status, event.time, event.data);
+                                }
+                            } catch (e) {
+                                console.warn('Failed to parse SSE event:', line, e);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Pipeline failed:', err);
+                alert('Pipeline failed: ' + err.message);
+            } finally {
+                stopTimer();
+                btn.disabled = false;
+                btn.textContent = 'Run Pipeline';
+            }
+        }
+
+        // Auto-load first test data
+        fetch('/test-data').then(r => r.json()).then(data => {
+            if (data.files && data.files.length > 0) {
+                fetch(`/test-data/${data.files[0].path}`)
+                    .then(r => r.json())
+                    .then(d => {
+                        document.getElementById('jsonEditor').value = JSON.stringify(d, null, 2);
+                    });
+            }
+        }).catch(() => {});
+    </script>
+</body>
+</html>

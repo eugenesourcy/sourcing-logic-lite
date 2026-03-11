@@ -1,0 +1,160 @@
+{
+	"runId": "test-run-water-bottle",
+	"original_requirement": {
+		"title": "Eco-Friendly Water Bottle",
+		"description": "Sustainable water bottle made from recycled materials. 500ml capacity with leak-proof lid. Matte finish in earth tones (green, brown, or beige). Dishwasher safe and BPA-free.",
+		"reference_images": [
+			"https://www.adidas.co.id/media/catalog/product/h/t/ht3520_fc_ecom.jpg",
+			"https://images-cdn.ubuy.co.id/6753eb04faa45c3300044adb-aquafina-purified-drinking-water-1.jpg"
+		],
+		"target_price": 6.5,
+		"target_price_currency": "USD",
+		"target_quantity": 500,
+		"target_quantity_unit": "pcs",
+		"needs_customization": false,
+		"num_options": 3,
+		"customization_reference_url": [],
+		"customization_type": null,
+		"customization_description": null
+	},
+	"specs": {
+		"veto_specs": [
+			{
+				"spec_id": 1,
+				"spec_name": "product_category",
+				"mandatory_values": ["water bottle", "reusable bottle"],
+				"unacceptable_values": ["disposable bottle", "single-use bottle"],
+				"spec_type": "Functional",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "VETO",
+				"matching_rule": "exact_match",
+				"reasoning": "Core product category identified in text. Must be a standalone bottle container.",
+				"veto_score": 10,
+				"priority_signal": "Signal 6: Visual Features (Product Category confirmed by text)"
+			},
+			{
+				"spec_id": 2,
+				"spec_name": "feature_safety",
+				"mandatory_values": ["dishwasher safe"],
+				"spec_type": "Functional",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "VETO",
+				"matching_rule": "exact_match",
+				"reasoning": "Explicit binary functional requirement related to product durability and maintenance.",
+				"veto_score": 9,
+				"priority_signal": "Signal 3: Binary Functional Requirements"
+			},
+			{
+				"spec_id": 3,
+				"spec_name": "feature_chemical_safety",
+				"mandatory_values": ["BPA-free"],
+				"spec_type": "Functional",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "VETO",
+				"matching_rule": "exact_match",
+				"reasoning": "Explicit safety standard requirement (Binary Yes/No).",
+				"veto_score": 9,
+				"priority_signal": "Signal 3: Binary Functional Requirements"
+			},
+			{
+				"spec_id": 4,
+				"spec_name": "feature_lid",
+				"mandatory_values": ["leak-proof"],
+				"spec_type": "Functional",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "VETO",
+				"matching_rule": "exact_match",
+				"reasoning": "Explicit binary functional performance requirement.",
+				"veto_score": 8,
+				"priority_signal": "Signal 3: Binary Functional Requirements"
+			}
+		],
+		"re_rank_specs": [
+			{
+				"spec_id": 5,
+				"spec_name": "material_composition",
+				"acceptable_values": [
+					"recycled materials",
+					"recycled plastic",
+					"rPET",
+					"recycled stainless steel"
+				],
+				"spec_type": "Functional",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "RE-RANK",
+				"matching_rule": "keyword_match",
+				"reasoning": "Key sustainability requirement. Classified as RE-RANK rather than VETO because verifying 'recycled' status often requires specific certifications (GRS) not always present in basic listing metadata. High weight assigned.",
+				"re_rank_score": 5
+			},
+			{
+				"spec_id": 6,
+				"spec_name": "capacity",
+				"acceptable_values": ["500ml", "17oz", "approx 500ml"],
+				"spec_type": "Numeric",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "RE-RANK",
+				"matching_rule": "within_10_percent",
+				"reasoning": "Specific numeric target. Score based on proximity to 500ml.",
+				"re_rank_score": 5
+			},
+			{
+				"spec_id": 7,
+				"spec_name": "finish",
+				"acceptable_values": ["matte"],
+				"spec_type": "Visual",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "RE-RANK",
+				"matching_rule": "keyword_match",
+				"reasoning": "Aesthetic preference explicitly requested.",
+				"re_rank_score": 3
+			},
+			{
+				"spec_id": 8,
+				"spec_name": "color",
+				"acceptable_values": ["green", "brown", "beige", "earth tones"],
+				"spec_type": "Visual",
+				"source": "text",
+				"text_confirmation": true,
+				"classification": "RE-RANK",
+				"matching_rule": "match_any",
+				"reasoning": "Specific color palette requested.",
+				"re_rank_score": 4
+			},
+			{
+				"spec_id": 9,
+				"spec_name": "price",
+				"acceptable_values": ["6.5"],
+				"spec_type": "Commercial",
+				"source": "text",
+				"classification": "RE-RANK",
+				"matching_rule": "prefer_lower",
+				"reasoning": "Commercial target price (Rule 1).",
+				"re_rank_score": 5,
+				"priority_signal": "None - commercial spec"
+			},
+			{
+				"spec_id": 10,
+				"spec_name": "quantity",
+				"acceptable_values": ["500"],
+				"spec_type": "Commercial",
+				"source": "text",
+				"classification": "RE-RANK",
+				"matching_rule": "meet_minimum",
+				"reasoning": "Commercial quantity (Rule 1).",
+				"re_rank_score": 5,
+				"priority_signal": "None - commercial spec"
+			}
+		]
+	},
+	"reference_images": [
+		"https://images-cdn.ubuy.co.id/6753eb04faa45c3300044adb-aquafina-purified-drinking-water-1.jpg"
+	],
+	"sourcing_type": "specific"
+}

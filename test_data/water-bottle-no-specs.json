@@ -1,0 +1,19 @@
+{
+    "runId": "water-bottle-no-specs-run",
+    "original_requirement": {
+        "title": "500ml Stainless Steel Water Bottle",
+        "description": "Double wall insulated water bottle, BPA-free, leak-proof lid, suitable for outdoor activities. Prefer matte finish in dark colors.",
+        "reference_images": [],
+        "target_price": 5.0,
+        "target_price_currency": "USD",
+        "target_quantity": 1000,
+        "target_quantity_unit": "pcs",
+        "needs_customization": false,
+        "num_options": 3
+    },
+    "specs": {
+        "veto_specs": [],
+        "re_rank_specs": []
+    },
+    "sourcing_type": "specific"
+}
